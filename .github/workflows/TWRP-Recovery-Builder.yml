@@ -20,22 +20,18 @@ on:
         default: 'https://github.com/mkpromvp/Recovery-tree-for-SM-A146P-.git'
 
       DEVICE_TREE_BRANCH:
-        description: 'Device Tree Branch'
         required: true
         default: 'main'
 
       DEVICE_PATH:
-        description: 'Device Path'
         required: true
         default: 'device/samsung/a14xm'
 
       DEVICE_NAME:
-        description: 'Device Codename'
         required: true
         default: 'a14xm'
 
       BUILD_TARGET:
-        description: 'Build Target'
         required: true
         default: 'recovery'
         type: choice
@@ -45,7 +41,6 @@ on:
         - vendorboot
 
       RECOVERY_TAR:
-        description: 'Samsung tar output'
         required: false
         default: false
         type: boolean
@@ -99,27 +94,21 @@ jobs:
         cd workspace
         git clone ${{ github.event.inputs.DEVICE_TREE }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ${{ github.event.inputs.DEVICE_PATH }}
 
-    - name: Fix makefile
+    # 🔥 FIXED: forced correct lunch combo (no more guessing)
+    - name: Set Build Config
       run: |
-        cd workspace
-        if [ -f ${{ github.event.inputs.DEVICE_PATH }}/omni_${{ github.event.inputs.DEVICE_NAME }}.mk ]; then
-          echo "DEVICE_MAKEFILE=omni_${{ github.event.inputs.DEVICE_NAME }}" >> $GITHUB_ENV
-        elif [ -f ${{ github.event.inputs.DEVICE_PATH }}/twrp_${{ github.event.inputs.DEVICE_NAME }}.mk ]; then
-          echo "DEVICE_MAKEFILE=twrp_${{ github.event.inputs.DEVICE_NAME }}" >> $GITHUB_ENV
-        else
-          echo "DEVICE_MAKEFILE=omni_${{ github.event.inputs.DEVICE_NAME }}" >> $GITHUB_ENV
-        fi
+        echo "DEVICE_MAKEFILE=twrp_a14xm" >> $GITHUB_ENV
 
     - name: Build recovery
       run: |
         cd workspace
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
-        lunch ${DEVICE_MAKEFILE}-eng
+        lunch twrp_a14xm-eng
         make clean
         make ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
 
-    - name: Check output
+    - name: Verify output
       run: |
         cd workspace
         if [ ! -f out/target/product/${{ github.event.inputs.DEVICE_NAME }}/recovery.img ]; then
@@ -128,14 +117,16 @@ jobs:
         fi
         echo "RECOVERY_TYPE=recovery" >> $GITHUB_ENV
 
-    - name: Prepare release
+    - name: Generate MD5
       run: |
         cd workspace
-        md5sum out/target/product/${{ github.event.inputs.DEVICE_NAME }}/recovery.img | cut -d ' ' -f1 > md5.txt
+        md5sum out/target/product/${{ github.event.inputs.DEVICE_NAME }}/recovery.img > md5.txt
 
     - name: Upload Release
       uses: softprops/action-gh-release@v1
       with:
-        files: workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/recovery.img
+        files: |
+          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/recovery.img
+          workspace/md5.txt
         name: TWRP ${{ github.event.inputs.DEVICE_NAME }}
         tag_name: ${{ github.run_id }}
