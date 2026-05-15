@@ -17,7 +17,7 @@ on:
       DEVICE_TREE:
         description: 'Device Tree URL'
         required: true
-        default: 'https://github.com/mkpromvp/Recovery-tree-for-SM-A146P-.git'
+        default: 'https://github.com/mkpromvp/Redmi-note-15-4g-spinel-recovery-tree-.git'
 
       DEVICE_TREE_BRANCH:
         required: true
@@ -25,11 +25,11 @@ on:
 
       DEVICE_PATH:
         required: true
-        default: 'device/samsung/a14xm'
+        default: 'device/xiaomi/spinel'
 
       DEVICE_NAME:
         required: true
-        default: 'a14xm'
+        default: 'spinel'
 
       BUILD_TARGET:
         required: true
@@ -97,7 +97,7 @@ jobs:
     # 🔥 FIXED: forced correct lunch combo (no more guessing)
     - name: Set Build Config
       run: |
-        echo "DEVICE_MAKEFILE=twrp_a14xm" >> $GITHUB_ENV
+        echo "DEVICE_MAKEFILE=twrp_spinel" >> $GITHUB_ENV
 
     - name: Build recovery
       run: |
